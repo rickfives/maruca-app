@@ -11,6 +11,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { ZeldaHeart } from './ZeldaHeart';
+import { ProductThumbnail } from './ProductThumbnail';
+import { classifyProductCategory } from '../../utils/productClassifier';
 
 interface ShareProductModalProps {
   isOpen: boolean;
@@ -116,17 +118,12 @@ Recomendado para una alimentación limpia y consciente con Maruca.`;
           {/* Tarjeta Visual de Previsualización */}
           <div className="bg-[#f2f2f7] dark:bg-black/50 p-4 rounded-[24px] border border-black/[0.06] dark:border-white/[0.08] mb-5 space-y-2">
             <div className="flex items-center gap-3">
-              {product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-12 h-12 rounded-xl object-contain bg-white dark:bg-[#1c1c1e] p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#1c1c1e] flex items-center justify-center text-[#86868b] shrink-0 border border-black/[0.06] dark:border-white/[0.06]">
-                  <Sparkles size={20} />
-                </div>
-              )}
+              <ProductThumbnail
+                src={product.imageUrl}
+                alt={product.name}
+                categoryKey={classifyProductCategory(product)}
+                className="w-12 h-12 rounded-xl object-contain bg-white dark:bg-[#1c1c1e] p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
+              />
               <div className="min-w-0 flex-1">
                 <div className="text-[14px] font-bold text-[#1d1d1f] dark:text-white tracking-tight truncate">
                   {product.name}

@@ -3,6 +3,8 @@ import { CartItem } from '../../types';
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, HeartCrack, Share2, Check } from 'lucide-react';
 import { CircularGauge } from '../common/CircularGauge';
 import { NovaBadge } from '../common/NutriscoreBadge';
+import { ProductThumbnail } from '../common/ProductThumbnail';
+import { classifyProductCategory } from '../../utils/productClassifier';
 
 interface CartViewProps {
   cartItems: CartItem[];
@@ -211,17 +213,12 @@ Analizado con Maruca. ¡Comer limpio es fácil!`;
                 onClick={() => onOpenProduct(item)}
                 className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
               >
-                {item.product.imageUrl ? (
-                  <img
-                    src={item.product.imageUrl}
-                    alt={item.product.name}
-                    className="w-11 h-11 rounded-xl object-contain bg-[#f2f2f7] dark:bg-black p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
-                  />
-                ) : (
-                  <div className="w-11 h-11 rounded-xl bg-[#f2f2f7] dark:bg-black flex items-center justify-center text-[#86868b] shrink-0 border border-black/[0.06] dark:border-white/[0.06]">
-                    <ShoppingBag size={18} />
-                  </div>
-                )}
+                <ProductThumbnail
+                  src={item.product.imageUrl}
+                  alt={item.product.name}
+                  categoryKey={classifyProductCategory(item.product)}
+                  className="w-11 h-11 rounded-xl object-contain bg-[#f2f2f7] dark:bg-black p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
+                />
 
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold text-[#1d1d1f] dark:text-white tracking-tight truncate">

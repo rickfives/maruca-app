@@ -3,6 +3,7 @@ import { ScannedProduct, UserProfile } from '../../types';
 import { evaluateProduct } from '../../utils/scoringEngine';
 import { Flame, ShieldAlert, History, ChevronRight } from 'lucide-react';
 import { classifyProductCategory, PRODUCT_CATEGORIES } from '../../utils/productClassifier';
+import { ProductThumbnail } from '../common/ProductThumbnail';
 
 interface StatsViewProps {
   scanHistory: ScannedProduct[];
@@ -179,17 +180,13 @@ export const StatsView: React.FC<StatsViewProps> = ({
                   className="w-full flex items-center justify-between p-3.5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition text-left active:bg-black/[0.06] dark:active:bg-white/[0.06]"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {prod.imageUrl ? (
-                      <img
-                        src={prod.imageUrl}
-                        alt={prod.name}
-                        className="w-10 h-10 rounded-xl object-contain bg-[#f2f2f7] dark:bg-black p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl bg-[#f2f2f7] dark:bg-black flex items-center justify-center text-[#86868b] shrink-0 border border-black/[0.06] dark:border-white/[0.06]">
-                        <History size={16} />
-                      </div>
-                    )}
+                    <ProductThumbnail
+                      src={prod.imageUrl}
+                      alt={prod.name}
+                      categoryKey={catKey}
+                      fallbackEmoji={meta.emoji}
+                      className="w-10 h-10 rounded-xl object-contain bg-[#f2f2f7] dark:bg-black p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
+                    />
                     <div className="min-w-0 flex-1 pr-2">
                       <div className="text-[13px] font-semibold text-[#1d1d1f] dark:text-white tracking-tight truncate">
                         {prod.name}

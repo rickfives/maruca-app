@@ -5,6 +5,8 @@ import { searchProductsByQuery } from '../../services/openFoodFacts';
 import { getAllDemoProducts } from '../../utils/fallbackProducts';
 import { NutriscoreBadge, NovaBadge } from '../common/NutriscoreBadge';
 import { playScanFeedback } from '../../utils/audioFeedback';
+import { ProductThumbnail } from '../common/ProductThumbnail';
+import { classifyProductCategory } from '../../utils/productClassifier';
 
 import { trackSearchEvent } from '../../services/analyticsService';
 
@@ -116,17 +118,12 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               }}
               className="w-full flex items-center gap-3 p-3.5 hover:bg-black/[0.03] dark:hover:bg-white/[0.04] text-left transition active:bg-black/[0.06] dark:active:bg-white/[0.08]"
             >
-              {prod.imageUrl ? (
-                <img
-                  src={prod.imageUrl}
-                  alt={prod.name}
-                  className="w-11 h-11 rounded-xl object-contain bg-[#f2f2f7] dark:bg-black p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
-                />
-              ) : (
-                <div className="w-11 h-11 rounded-xl bg-[#f2f2f7] dark:bg-black flex items-center justify-center text-[#86868b] shrink-0 border border-black/[0.06] dark:border-white/[0.06]">
-                  <ShoppingBag size={18} />
-                </div>
-              )}
+              <ProductThumbnail
+                src={prod.imageUrl}
+                alt={prod.name}
+                categoryKey={classifyProductCategory(prod)}
+                className="w-11 h-11 rounded-xl object-contain bg-[#f2f2f7] dark:bg-black p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
+              />
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-semibold text-[#1d1d1f] dark:text-white tracking-tight truncate">
                   {prod.name}

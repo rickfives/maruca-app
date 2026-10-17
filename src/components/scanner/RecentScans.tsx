@@ -19,6 +19,7 @@ import {
   PRODUCT_CATEGORIES,
   ProductCategoryKey,
 } from '../../utils/productClassifier';
+import { ProductThumbnail } from '../common/ProductThumbnail';
 
 interface RecentScansProps {
   scanHistory: ScannedProduct[];
@@ -297,17 +298,13 @@ export const RecentScans: React.FC<RecentScansProps> = ({
                       className="p-3 flex items-center justify-between gap-3 hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition cursor-pointer group active:bg-black/[0.06] dark:active:bg-white/[0.06]"
                     >
                       {/* Thumbnail */}
-                      {prod.imageUrl ? (
-                        <img
-                          src={prod.imageUrl}
-                          alt={prod.name}
-                          className="w-12 h-12 rounded-xl object-contain bg-white dark:bg-[#1c1c1e] p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#1c1c1e] flex items-center justify-center text-[#86868b] shrink-0 border border-black/[0.06] dark:border-white/[0.06]">
-                          <ShoppingBag size={18} />
-                        </div>
-                      )}
+                      <ProductThumbnail
+                        src={prod.imageUrl}
+                        alt={prod.name}
+                        categoryKey={catKey}
+                        fallbackEmoji={meta.emoji}
+                        className="w-12 h-12 rounded-xl object-contain bg-white dark:bg-[#1c1c1e] p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
+                      />
 
                       {/* Detalles del Producto */}
                       <div className="min-w-0 flex-1">

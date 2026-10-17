@@ -109,6 +109,36 @@ export function App() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     } catch (e) {}
+
+    // Saneamiento proactivo de URLs de imágenes de productos guardados en el historial
+    setScanHistory((prev) => {
+      let changed = false;
+      const healed = prev.map((p) => {
+        let newUrl = p.imageUrl;
+        if (p.barcode === '3017620422003' && (!p.imageUrl || p.imageUrl.includes('365.400'))) {
+          newUrl = 'https://images.openfoodfacts.org/images/products/301/762/042/2003/front_en.879.400.jpg';
+        } else if (p.barcode === '5449000000996' && (!p.imageUrl || p.imageUrl.includes('500.400'))) {
+          newUrl = 'https://images.openfoodfacts.org/images/products/544/900/000/0996/front_en.1129.400.jpg';
+        } else if (p.barcode === '5449000131805' && (!p.imageUrl || p.imageUrl.includes('389.400'))) {
+          newUrl = 'https://images.openfoodfacts.org/images/products/544/900/013/1805/front_en.810.400.jpg';
+        } else if (p.barcode === '8410076472052' && (!p.imageUrl || p.imageUrl.includes('18.400'))) {
+          newUrl = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80';
+        } else if (p.barcode === '8410069000101' && (!p.imageUrl || p.imageUrl.includes('25.400'))) {
+          newUrl = 'https://images.openfoodfacts.org/images/products/841/006/900/0101/front_es.5.400.jpg';
+        } else if (p.barcode === '8480000105042' && (!p.imageUrl || p.imageUrl.includes('36.400'))) {
+          newUrl = 'https://images.unsplash.com/photo-1608039829572-78524f79c4c7?w=400&q=80';
+        } else if (p.barcode === '8480000340269' && (!p.imageUrl || p.imageUrl.includes('41.400'))) {
+          newUrl = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&q=80';
+        }
+
+        if (newUrl !== p.imageUrl) {
+          changed = true;
+          return { ...p, imageUrl: newUrl };
+        }
+        return p;
+      });
+      return changed ? healed : prev;
+    });
   }, []);
 
   const handleAuthSuccess = (user: AuthUser) => {

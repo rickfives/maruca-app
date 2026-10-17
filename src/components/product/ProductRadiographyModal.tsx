@@ -27,6 +27,8 @@ import {
 import { ShareProductModal } from '../common/ShareProductModal';
 import { playScanFeedback } from '../../utils/audioFeedback';
 import { evaluateProduct } from '../../utils/scoringEngine';
+import { ProductThumbnail } from '../common/ProductThumbnail';
+import { classifyProductCategory } from '../../utils/productClassifier';
 
 interface ProductRadiographyModalProps {
   evaluation: ProductEvaluation | null;
@@ -212,17 +214,12 @@ export const ProductRadiographyModal: React.FC<ProductRadiographyModalProps> = (
           {/* 2. Apple Health Product Card */}
           <div className="bg-[#f2f2f7] dark:bg-black/50 p-4 rounded-[24px] border border-black/[0.06] dark:border-white/[0.06] flex items-center justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0">
-              {product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-20 h-20 rounded-2xl object-contain bg-white dark:bg-[#1c1c1e] p-1.5 border border-black/[0.08] dark:border-white/[0.08] shrink-0"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-2xl bg-white dark:bg-[#1c1c1e] flex items-center justify-center text-[#86868b] shrink-0 border border-black/[0.08] dark:border-white/[0.08]">
-                  <ShoppingBag size={26} />
-                </div>
-              )}
+              <ProductThumbnail
+                src={product.imageUrl}
+                alt={product.name}
+                categoryKey={classifyProductCategory(product)}
+                className="w-20 h-20 rounded-2xl object-contain bg-white dark:bg-[#1c1c1e] p-1.5 border border-black/[0.08] dark:border-white/[0.08] shrink-0"
+              />
               <div className="min-w-0">
                 <h3 className="text-[16px] font-bold text-[#1d1d1f] dark:text-white tracking-tight leading-snug line-clamp-2">
                   {product.name}
@@ -300,17 +297,12 @@ export const ProductRadiographyModal: React.FC<ProductRadiographyModalProps> = (
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          {swap.imageUrl ? (
-                            <img
-                              src={swap.imageUrl}
-                              alt={swap.name}
-                              className="w-13 h-13 rounded-xl object-contain bg-[#f2f2f7] dark:bg-black p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
-                            />
-                          ) : (
-                            <div className="w-13 h-13 rounded-xl bg-[#f2f2f7] dark:bg-black flex items-center justify-center text-[#30d158] shrink-0 border border-black/[0.06] dark:border-white/[0.06]">
-                              <ShieldCheck size={22} />
-                            </div>
-                          )}
+                          <ProductThumbnail
+                            src={swap.imageUrl}
+                            alt={swap.name}
+                            fallbackIcon={<ShieldCheck size={20} className="text-[#30d158]" />}
+                            className="w-13 h-13 rounded-xl object-contain bg-[#f2f2f7] dark:bg-black p-1 shrink-0 border border-black/[0.06] dark:border-white/[0.06]"
+                          />
                           <div className="min-w-0">
                             <h5 className="text-[13px] font-bold text-[#1d1d1f] dark:text-white tracking-tight truncate">
                               {swap.name}
