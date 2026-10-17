@@ -60,6 +60,7 @@ export const ProductThumbnail: React.FC<ProductThumbnailProps> = ({
       onError={() => setHasError(true)}
       loading="lazy"
       decoding="async"
+      referrerPolicy="no-referrer"
       className={className}
     />
   );
