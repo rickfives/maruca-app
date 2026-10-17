@@ -50,12 +50,7 @@ export function App() {
 
   const [scanHistory, setScanHistory] = useLocalStorage<ScannedProduct[]>(
     'nutriradar_history',
-    [
-      FALLBACK_DEMO_PRODUCTS['5449000000996'].product, // Bebidas: Coca-Cola
-      FALLBACK_DEMO_PRODUCTS['8410076472052'].product, // Comidas: Avena Integral
-      FALLBACK_DEMO_PRODUCTS['8410069000101'].product, // Salsas: Tomate Frito Solís
-      FALLBACK_DEMO_PRODUCTS['3017620422003'].product, // Postres: Nutella
-    ]
+    []
   );
 
   const [cartItems, setCartItems] = useLocalStorage<CartItem[]>(

@@ -12,8 +12,8 @@ import {
   CheckCircle,
   AlertCircle,
   X,
-  Sparkles,
   ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 import { playScanFeedback } from '../../utils/audioFeedback';
 
@@ -64,8 +64,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       onClose();
     }, 900);
   };
-
-
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/75 backdrop-blur-xl">
@@ -224,8 +222,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             )}
           </button>
         </form>
-
-
 
         {/* Continuar como invitado */}
         <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.08] text-center">

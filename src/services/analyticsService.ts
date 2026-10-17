@@ -10,130 +10,8 @@ import { getRegisteredUsers } from './authService';
 
 const STORAGE_EVENTS_KEY = 'maruca_telemetry_events';
 
-// Semilla inicial realista de eventos pasados para que el administrador tenga datos útiles de inmediato
-const SEED_EVENTS: TelemetryEvent[] = [
-  {
-    id: 'evt_seed_1',
-    type: 'scan',
-    timestamp: Date.now() - 1000 * 60 * 12,
-    userId: 'usr_guest_49',
-    username: 'Invitado #49',
-    data: {
-      productName: 'Coca-Cola Original',
-      barcode: '5449000000996',
-      brand: 'Coca-Cola',
-      category: 'Bebidas',
-      nutriScore: 'E',
-      novaGroup: 4,
-      isHealthy: false,
-      allergensFound: [],
-    },
-  },
-  {
-    id: 'evt_seed_2',
-    type: 'swap_selected',
-    timestamp: Date.now() - 1000 * 60 * 18,
-    userId: 'usr_guest_49',
-    username: 'Invitado #49',
-    data: {
-      swapOriginal: 'Coca-Cola Original',
-      swapTarget: 'Agua mineral con gas y lima fresca',
-    },
-  },
-  {
-    id: 'evt_seed_3',
-    type: 'scan',
-    timestamp: Date.now() - 1000 * 60 * 35,
-    userId: 'usr_demo_1',
-    username: 'usuario',
-    data: {
-      productName: 'Copos de Avena Integral',
-      barcode: '8410076472052',
-      brand: 'Hacendado',
-      category: 'Comidas',
-      nutriScore: 'A',
-      novaGroup: 1,
-      isHealthy: true,
-      allergensFound: ['gluten'],
-    },
-  },
-  {
-    id: 'evt_seed_4',
-    type: 'search',
-    timestamp: Date.now() - 1000 * 60 * 50,
-    userId: 'usr_guest_52',
-    username: 'Invitado #52',
-    data: {
-      searchQuery: 'pan 100 integral',
-      resultsCount: 6,
-    },
-  },
-  {
-    id: 'evt_seed_5',
-    type: 'scan',
-    timestamp: Date.now() - 1000 * 60 * 75,
-    userId: 'usr_guest_51',
-    username: 'Invitado #51',
-    data: {
-      productName: 'Nutella Crema de Avellana',
-      barcode: '3017620422003',
-      brand: 'Ferrero',
-      category: 'Postres',
-      nutriScore: 'E',
-      novaGroup: 4,
-      isHealthy: false,
-      allergensFound: ['nuts', 'lactose', 'soy'],
-    },
-  },
-  {
-    id: 'evt_seed_6',
-    type: 'scan',
-    timestamp: Date.now() - 1000 * 60 * 110,
-    userId: 'usr_guest_50',
-    username: 'Invitado #50',
-    data: {
-      productName: 'Tomate Frito Receta Artesana',
-      barcode: '8410069000101',
-      brand: 'Solís',
-      category: 'Salsas',
-      nutriScore: 'C',
-      novaGroup: 4,
-      isHealthy: false,
-      allergensFound: [],
-    },
-  },
-  {
-    id: 'evt_seed_7',
-    type: 'allergen_alert',
-    timestamp: Date.now() - 1000 * 60 * 140,
-    userId: 'usr_guest_48',
-    username: 'Invitado #48',
-    data: {
-      productName: 'Galletas de Trigo y Chocolate',
-      barcode: '8410000000001',
-      brand: 'Gullón',
-      category: 'Postres',
-      allergensFound: ['gluten', 'lactose'],
-    },
-  },
-  {
-    id: 'evt_seed_8',
-    type: 'scan',
-    timestamp: Date.now() - 1000 * 60 * 180,
-    userId: 'usr_demo_1',
-    username: 'usuario',
-    data: {
-      productName: 'Kéfir Natural Ecológico',
-      barcode: '8410000000002',
-      brand: 'Pastoret',
-      category: 'Comidas',
-      nutriScore: 'A',
-      novaGroup: 1,
-      isHealthy: true,
-      allergensFound: ['lactose'],
-    },
-  },
-];
+// Almacén de eventos de telemetría reales generados por los usuarios
+const SEED_EVENTS: TelemetryEvent[] = [];
 
 /**
  * Obtiene todos los eventos de telemetría registrados
@@ -142,13 +20,16 @@ export function getTelemetryEvents(): TelemetryEvent[] {
   try {
     const raw = localStorage.getItem(STORAGE_EVENTS_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_EVENTS_KEY, JSON.stringify(SEED_EVENTS));
-      return SEED_EVENTS;
+      return [];
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : SEED_EVENTS;
+    // Limpiar eventos simulados antiguos si existían
+    if (Array.isArray(parsed)) {
+      return parsed.filter((e) => !e.id?.startsWith('evt_seed_'));
+    }
+    return [];
   } catch (e) {
-    return SEED_EVENTS;
+    return [];
   }
 }
 
@@ -317,19 +198,16 @@ export function getTelemetryDashboardData(): TelemetryDashboardData {
   const events = getTelemetryEvents();
   const registeredUsers = getRegisteredUsers();
 
-  // Escaneos acumulados reales más base de uso
+  // Escaneos y usuarios 100% reales
   const scanEvents = events.filter((e) => e.type === 'scan');
-  const liveScansCount = scanEvents.length;
-  // Base estadística representativa (240 escaneos base + escaneos en vivo)
-  const totalScansCount = Math.max(248, 240 + liveScansCount);
+  const totalScansCount = scanEvents.length;
 
-  // Estimación de visitantes activos
-  const activeUsersCount = Math.max(38, registeredUsers.length * 6 + 24);
   const registeredCount = registeredUsers.length;
-  const guestUsersCount = Math.max(28, activeUsersCount - registeredCount);
-  const proUsersCount = Math.max(4, Math.floor(registeredCount * 0.4) + 2);
+  const activeUsersCount = Math.max(1, registeredCount);
+  const guestUsersCount = events.filter((e) => e.userId?.startsWith('usr_guest')).length;
+  const proUsersCount = registeredUsers.filter((u) => u.isAdmin).length;
 
-  // Conteo de productos escaneados agrupados
+  // Conteo de productos escaneados agrupados (100% REALES)
   const productMap: Record<
     string,
     {
@@ -342,90 +220,9 @@ export function getTelemetryDashboardData(): TelemetryDashboardData {
       novaGroup: number;
       isHealthy: boolean;
     }
-  > = {
-    '5449000000996': {
-      barcode: '5449000000996',
-      productName: 'Coca-Cola Original',
-      brand: 'The Coca-Cola Company',
-      category: 'Bebidas',
-      scansCount: 42,
-      nutriScore: 'E',
-      novaGroup: 4,
-      isHealthy: false,
-    },
-    '8410076472052': {
-      barcode: '8410076472052',
-      productName: 'Copos de Avena Integral',
-      brand: 'Hacendado',
-      category: 'Comidas',
-      scansCount: 36,
-      nutriScore: 'A',
-      novaGroup: 1,
-      isHealthy: true,
-    },
-    '3017620422003': {
-      barcode: '3017620422003',
-      productName: 'Nutella Crema de Avellana',
-      brand: 'Ferrero',
-      category: 'Postres',
-      scansCount: 31,
-      nutriScore: 'E',
-      novaGroup: 4,
-      isHealthy: false,
-    },
-    '8410069000101': {
-      barcode: '8410069000101',
-      productName: 'Tomate Frito Receta Artesana',
-      brand: 'Solís',
-      category: 'Salsas',
-      scansCount: 26,
-      nutriScore: 'C',
-      novaGroup: 4,
-      isHealthy: false,
-    },
-    '8410000000003': {
-      barcode: '8410000000003',
-      productName: 'Galletas Chiquilín Tradicionales',
-      brand: 'Artiach',
-      category: 'Postres',
-      scansCount: 21,
-      nutriScore: 'E',
-      novaGroup: 4,
-      isHealthy: false,
-    },
-    '8410000000004': {
-      barcode: '8410000000004',
-      productName: 'Yogur Griego Natural Oikos',
-      brand: 'Danone',
-      category: 'Comidas',
-      scansCount: 19,
-      nutriScore: 'A',
-      novaGroup: 1,
-      isHealthy: true,
-    },
-    '8410000000005': {
-      barcode: '8410000000005',
-      productName: 'Lentejas Pardinas de León',
-      brand: 'Luengo',
-      category: 'Comidas',
-      scansCount: 17,
-      nutriScore: 'A',
-      novaGroup: 1,
-      isHealthy: true,
-    },
-    '8410000000006': {
-      barcode: '8410000000006',
-      productName: 'Fanta Naranja Refresco',
-      brand: 'Coca-Cola',
-      category: 'Bebidas',
-      scansCount: 15,
-      nutriScore: 'E',
-      novaGroup: 4,
-      isHealthy: false,
-    },
-  };
+  > = {};
 
-  // Sumar eventos en vivo
+  // Sumar eventos reales
   scanEvents.forEach((evt) => {
     const code = evt.data.barcode || evt.data.productName || 'unknown';
     if (productMap[code]) {
@@ -446,13 +243,13 @@ export function getTelemetryDashboardData(): TelemetryDashboardData {
 
   const topScannedProducts = Object.values(productMap).sort((a, b) => b.scansCount - a.scansCount);
 
-  // Conteo por categorías
+  // Conteo por categorías 100% real
   const catCounts: Record<string, { total: number; healthy: number; unhealthy: number }> = {
-    Bebidas: { total: 84, healthy: 18, unhealthy: 66 },
-    Comidas: { total: 76, healthy: 54, unhealthy: 22 },
-    Postres: { total: 52, healthy: 6, unhealthy: 46 },
-    Salsas: { total: 36, healthy: 8, unhealthy: 28 },
-    Snacks: { total: 24, healthy: 4, unhealthy: 20 },
+    Bebidas: { total: 0, healthy: 0, unhealthy: 0 },
+    Comidas: { total: 0, healthy: 0, unhealthy: 0 },
+    Postres: { total: 0, healthy: 0, unhealthy: 0 },
+    Salsas: { total: 0, healthy: 0, unhealthy: 0 },
+    Snacks: { total: 0, healthy: 0, unhealthy: 0 },
   };
 
   scanEvents.forEach((evt) => {
@@ -468,30 +265,22 @@ export function getTelemetryDashboardData(): TelemetryDashboardData {
     .map(([cat, data]) => ({
       category: cat,
       count: data.total,
-      percentage: Math.round((data.total / totalCatSum) * 100),
+      percentage: totalCatSum > 0 ? Math.round((data.total / totalCatSum) * 100) : 0,
       healthyCount: data.healthy,
       unhealthyCount: data.unhealthy,
     }))
     .sort((a, b) => b.count - a.count);
 
-  // Métricas de Salud colectiva
+  // Métricas de Salud colectiva reales
   const totalScannedItems = topScannedProducts.reduce((acc, p) => acc + p.scansCount, 0);
   const totalUltraprocessed = topScannedProducts
     .filter((p) => p.novaGroup === 4)
     .reduce((acc, p) => acc + p.scansCount, 0);
-  const ultraprocessedPercentage = Math.round((totalUltraprocessed / totalScannedItems) * 100);
-  const cleanEatingPercentage = 100 - ultraprocessedPercentage;
+  const ultraprocessedPercentage = totalScannedItems > 0 ? Math.round((totalUltraprocessed / totalScannedItems) * 100) : 0;
+  const cleanEatingPercentage = totalScannedItems > 0 ? 100 - ultraprocessedPercentage : 0;
 
-  // Búsquedas populares
-  const searchCounts: Record<string, number> = {
-    'coca cola': 48,
-    avena: 41,
-    'tomate frito': 32,
-    'galletas sin azucar': 26,
-    kefir: 22,
-    'aceite de oliva': 19,
-    hummus: 15,
-  };
+  // Búsquedas populares reales
+  const searchCounts: Record<string, number> = {};
 
   events
     .filter((e) => e.type === 'search' && e.data.searchQuery)
@@ -505,15 +294,8 @@ export function getTelemetryDashboardData(): TelemetryDashboardData {
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
-  // Alérgenos
-  const allergenCounts: Record<string, { label: string; alerts: number }> = {
-    gluten: { label: 'Sin Gluten (Celiaquía)', alerts: 42 },
-    lactose: { label: 'Sin Lactosa / Leche', alerts: 34 },
-    palm_oil: { label: 'Aceite de Palma (Filtro)', alerts: 51 },
-    added_sugars: { label: 'Azúcares Añadidos (Filtro)', alerts: 67 },
-    nuts: { label: 'Frutos de Cáscara', alerts: 18 },
-    soy: { label: 'Soja', alerts: 12 },
-  };
+  // Alérgenos reales disparados
+  const allergenCounts: Record<string, { label: string; alerts: number }> = {};
 
   events
     .filter((e) => e.type === 'allergen_alert' && e.data.allergensFound)
@@ -533,6 +315,20 @@ export function getTelemetryDashboardData(): TelemetryDashboardData {
     label: v.label,
     alertsTriggered: v.alerts,
   }));
+
+  // Alternativas seleccionadas reales
+  const swapCounts: Record<string, { original: string; swap: string; count: number }> = {};
+  events
+    .filter((e) => e.type === 'swap_selected' && e.data.swapOriginal && e.data.swapTarget)
+    .forEach((e) => {
+      const key = `${e.data.swapOriginal}->${e.data.swapTarget}`;
+      if (swapCounts[key]) {
+        swapCounts[key].count += 1;
+      } else {
+        swapCounts[key] = { original: e.data.swapOriginal!, swap: e.data.swapTarget!, count: 1 };
+      }
+    });
+  const topRecommendedSwaps = Object.values(swapCounts).sort((a, b) => b.count - a.count).slice(0, 5);
 
   // Sugerencias de IA para mejorar la web
   const aiActionableInsights: TelemetryDashboardData['aiActionableInsights'] = [

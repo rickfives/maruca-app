@@ -32,22 +32,11 @@ const ADMIN_USER: StoredUserAccount = {
   id: 'usr_admin_dawsson',
   username: 'dawsson',
   email: 'dawsson@maruca.app',
-  name: 'Dawsson (Administrador)',
-  avatarColor: '#bf5af2', // Apple Purple / Royale
+  name: 'Dawsson',
+  avatarColor: '#bf5af2',
   isAdmin: true,
   passwordHash: hashPassword('mxonda1234'),
   createdAt: '2026-10-10T08:00:00.000Z',
-};
-
-const DEMO_USER: StoredUserAccount = {
-  id: 'usr_demo_1',
-  username: 'usuario',
-  email: 'usuario@maruca.app',
-  name: 'Usuario Maruca',
-  avatarColor: '#30d158',
-  isAdmin: false,
-  passwordHash: hashPassword('maruca123'),
-  createdAt: new Date().toISOString(),
 };
 
 /**
@@ -58,7 +47,7 @@ export function getRegisteredUsers(): StoredUserAccount[] {
     const raw = localStorage.getItem(STORAGE_USERS_KEY);
     let list: StoredUserAccount[] = [];
     if (!raw) {
-      list = [ADMIN_USER, DEMO_USER];
+      list = [ADMIN_USER];
       localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(list));
       return list;
     }
@@ -83,7 +72,7 @@ export function getRegisteredUsers(): StoredUserAccount[] {
     return list;
   } catch (e) {
     console.error('Error cargando usuarios registrados:', e);
-    return [ADMIN_USER, DEMO_USER];
+    return [ADMIN_USER];
   }
 }
 
