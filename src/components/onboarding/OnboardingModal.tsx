@@ -78,6 +78,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
     };
 
     onComplete(newProfile);
+
+    if (isPro) {
+      setTimeout(() => {
+        window.location.href = 'https://buy.stripe.com/eVqfZh6gxcYE2uG0oxgQE00';
+      }, 400);
+    }
   };
 
   return (

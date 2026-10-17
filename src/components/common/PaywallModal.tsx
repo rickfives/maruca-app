@@ -12,6 +12,8 @@ interface PaywallModalProps {
   onContinueFree?: () => void;
 }
 
+export const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/eVqfZh6gxcYE2uG0oxgQE00';
+
 export const PaywallModal: React.FC<PaywallModalProps> = ({
   isOpen,
   onClose,
@@ -33,10 +35,10 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
       });
     } catch (e) {}
 
-    onActivatePro();
+    // Redirigir directamente a la pasarela segura de Stripe
     setTimeout(() => {
-      onClose();
-    }, 350);
+      window.location.href = STRIPE_PAYMENT_LINK;
+    }, 450);
   };
 
   return (
@@ -148,8 +150,11 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             )}
           </div>
 
-          <div className="text-center text-[10px] text-[#86868b] mt-4 leading-normal">
-            Sin permanencia. Cancela o modifica tu suscripción en cualquier momento.
+          <div className="text-center text-[11px] text-[#86868b] mt-4 leading-normal space-y-1">
+            <div className="flex items-center justify-center gap-1.5 text-[#30d158] font-medium text-[11px]">
+              <span>🔒 Pago Seguro procesado por Stripe</span>
+            </div>
+            <div>Apple Pay, Google Pay y Tarjeta Bancaria • Sin permanencia</div>
           </div>
         </motion.div>
       </div>

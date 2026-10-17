@@ -101,6 +101,19 @@ export function App() {
         freeScansRemaining: isDawsson ? 99999 : prev.freeScansRemaining,
       }));
     }
+
+    // Detección de pago completado en Stripe (?payment=success o ?pro=true)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('payment') === 'success' || urlParams.get('pro') === 'true') {
+        setUserProfile((prev) => ({
+          ...prev,
+          isPro: true,
+          freeScansRemaining: 99999,
+        }));
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (e) {}
   }, []);
 
   const handleAuthSuccess = (user: AuthUser) => {
