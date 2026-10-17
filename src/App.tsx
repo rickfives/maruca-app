@@ -24,6 +24,7 @@ import { IngredientOcrScanner } from './components/scanner/IngredientOcrScanner'
 import { RecentScans } from './components/scanner/RecentScans';
 import { DailyRecommendationCard } from './components/daily/DailyRecommendationCard';
 import { ProductRadiographyModal } from './components/product/ProductRadiographyModal';
+import { InstallAppModal } from './components/common/InstallAppModal';
 import { CartView } from './components/cart/CartView';
 import { StatsView } from './components/stats/StatsView';
 import { ProfileView } from './components/profile/ProfileView';
@@ -62,6 +63,8 @@ export function App() {
   const [scannerMode, setScannerMode] = useState<'camera' | 'search' | 'ocr'>('search');
 
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(!userProfile.hasCompletedOnboarding);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isPaywallOpen, setIsPaywallOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
@@ -171,6 +174,33 @@ export function App() {
       });
       return changed ? healed : prev;
     });
+
+    // Escuchar evento de instalación PWA (Chrome, Edge, Android)
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+    // Detección de primera visita para ofrecer crear acceso directo / WebApp
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
+    const hasSeenInstallPrompt = localStorage.getItem('maruca_pwa_prompt_v1');
+
+    let installTimer: any = null;
+    if (!isStandalone && !hasSeenInstallPrompt) {
+      if (userProfile.hasCompletedOnboarding) {
+        installTimer = setTimeout(() => {
+          setIsInstallModalOpen(true);
+        }, 1500);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      if (installTimer) clearTimeout(installTimer);
+    };
   }, []);
 
   const handleAuthSuccess = (user: AuthUser) => {
@@ -346,6 +376,7 @@ export function App() {
         onOpenPaywall={() => setIsPaywallOpen(true)}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenAdmin={() => setIsAdminModalOpen(true)}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
@@ -493,6 +524,7 @@ export function App() {
             onOpenPaywall={() => setIsPaywallOpen(true)}
             onOpenAuth={() => setIsAuthModalOpen(true)}
             onOpenAdmin={() => setIsAdminModalOpen(true)}
+            onOpenInstallModal={() => setIsInstallModalOpen(true)}
             onLogout={handleLogout}
             onResetOnboarding={handleResetOnboarding}
             theme={theme}
@@ -525,6 +557,15 @@ export function App() {
         onComplete={(newProfile) => {
           setUserProfile(newProfile);
           setIsOnboardingOpen(false);
+          const isStandalone =
+            window.matchMedia('(display-mode: standalone)').matches ||
+            (window.navigator as any).standalone === true;
+          const hasSeenInstallPrompt = localStorage.getItem('maruca_pwa_prompt_v1');
+          if (!isStandalone && !hasSeenInstallPrompt) {
+            setTimeout(() => {
+              setIsInstallModalOpen(true);
+            }, 800);
+          }
         }}
       />
 
@@ -549,6 +590,13 @@ export function App() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         adminUsername={userProfile.userAccount?.username}
+      />
+
+      {/* WebApp Desktop / PWA Install Prompt Modal */}
+      <InstallAppModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        deferredPrompt={deferredPrompt}
       />
     </div>
   );

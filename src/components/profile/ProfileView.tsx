@@ -10,6 +10,7 @@ import {
   Sun,
   Moon,
   User,
+  Download,
 } from 'lucide-react';
 import { ZeldaHeart } from '../common/ZeldaHeart';
 import { ThemeMode } from '../../hooks/useTheme';
@@ -20,6 +21,7 @@ interface ProfileViewProps {
   onOpenPaywall: () => void;
   onOpenAuth?: () => void;
   onOpenAdmin?: () => void;
+  onOpenInstallModal?: () => void;
   onLogout?: () => void;
   onResetOnboarding: () => void;
   theme?: ThemeMode;
@@ -51,6 +53,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onOpenPaywall,
   onOpenAuth,
   onOpenAdmin,
+  onOpenInstallModal,
   onLogout,
   onResetOnboarding,
   theme = 'dark',
@@ -281,6 +284,37 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Dispositivo & Escritorio (WebApp PWA) */}
+      {onOpenInstallModal && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider px-2">
+            Dispositivo & Acceso Rápido
+          </span>
+          <div className="bg-white dark:bg-[#1c1c1e] border border-black/[0.08] dark:border-white/[0.08] rounded-[28px] overflow-hidden shadow-sm">
+            <button
+              type="button"
+              onClick={onOpenInstallModal}
+              className="w-full p-4 flex items-center justify-between hover:bg-black/[0.02] dark:hover:bg-white/[0.02] text-left transition active:bg-black/[0.04] dark:active:bg-white/[0.04]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-[#30d158]/15 text-[#30d158] flex items-center justify-center">
+                  <Download size={16} />
+                </div>
+                <div>
+                  <div className="text-[14px] font-semibold text-[#1d1d1f] dark:text-white">
+                    Instalar en Escritorio / Pantalla de Inicio
+                  </div>
+                  <div className="text-[12px] text-[#86868b]">
+                    Crear acceso directo para usar Maruca como WebApp nativa
+                  </div>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-[#86868b]" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 4. Settings: Preferencias Biológicas */}
       <div className="space-y-1.5">

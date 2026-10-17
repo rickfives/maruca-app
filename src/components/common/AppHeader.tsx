@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserProfile } from '../../types';
-import { Sparkles, Crown, Sun, Moon, User as UserIcon } from 'lucide-react';
+import { Sparkles, Crown, Sun, Moon, User as UserIcon, Download } from 'lucide-react';
 import { ZeldaHeart } from './ZeldaHeart';
 import { ThemeMode } from '../../hooks/useTheme';
 
@@ -9,6 +9,7 @@ interface AppHeaderProps {
   onOpenPaywall: () => void;
   onOpenAuth?: () => void;
   onOpenAdmin?: () => void;
+  onOpenInstallModal?: () => void;
   theme: ThemeMode;
   onToggleTheme: () => void;
 }
@@ -18,6 +19,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onOpenPaywall,
   onOpenAuth,
   onOpenAdmin,
+  onOpenInstallModal,
   theme,
   onToggleTheme,
 }) => {
@@ -76,6 +78,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             >
               <Crown size={12} className="text-[#bf5af2]" />
               <span>Admin</span>
+            </button>
+          )}
+
+          {/* Install WebApp Button */}
+          {onOpenInstallModal && (
+            <button
+              type="button"
+              onClick={onOpenInstallModal}
+              className="w-8 h-8 rounded-full bg-[#30d158]/15 hover:bg-[#30d158]/25 text-[#30d158] flex items-center justify-center transition active:scale-95 border border-[#30d158]/25"
+              title="Instalar en el Escritorio / Pantalla de Inicio"
+            >
+              <Download size={14} />
             </button>
           )}
 

@@ -1,0 +1,20 @@
+{
+  "name": "Maruca - Salud & Alérgenos",
+  "short_name": "Maruca",
+  "description": "Escáner inteligente de salud, nutrición, alérgenos y ultraprocesados en tiempo real.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "food", "lifestyle"]
+}
