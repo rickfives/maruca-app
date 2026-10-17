@@ -28,7 +28,7 @@ import { InstallAppModal } from './components/common/InstallAppModal';
 import { CartView } from './components/cart/CartView';
 import { StatsView } from './components/stats/StatsView';
 import { ProfileView } from './components/profile/ProfileView';
-import { Camera, Search, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { Camera, Search, Sparkles, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { FALLBACK_DEMO_PRODUCTS } from './utils/fallbackProducts';
 import { useTheme } from './hooks/useTheme';
 
@@ -72,6 +72,7 @@ export function App() {
 
   const [isLoadingProduct, setIsLoadingProduct] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sharedToastMessage, setSharedToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userProfile.hasCompletedOnboarding) {
@@ -174,6 +175,80 @@ export function App() {
       });
       return changed ? healed : prev;
     });
+
+    // Detección y sincronización automática de producto compartido por enlace
+    // (?barcode= o ?product= o ?p= o ?sharedData= o ?sharedProduct=)
+    const handleSharedProductDeepLink = async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const barcodeParam = urlParams.get('barcode') || urlParams.get('product') || urlParams.get('p');
+        const sharedDataParam = urlParams.get('sharedData') || urlParams.get('sharedProduct');
+
+        if (!barcodeParam && !sharedDataParam) return;
+
+        // Limpiar parámetros de la URL inmediatamente para evitar ejecuciones repetidas
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Si se abre un producto compartido, permitir ver el producto sin bloqueo de onboarding
+        setIsOnboardingOpen(false);
+        setActiveTab('scan');
+        setIsLoadingProduct(true);
+
+        let targetProduct: ScannedProduct | null = null;
+
+        // 1. Si viene con datos serializados en el enlace
+        if (sharedDataParam) {
+          try {
+            const json = decodeURIComponent(escape(atob(sharedDataParam)));
+            const parsed = JSON.parse(json);
+            if (parsed && parsed.name) {
+              targetProduct = parsed;
+            }
+          } catch (e) {
+            console.warn('No se pudo decodificar datos del producto compartido:', e);
+          }
+        }
+
+        // 2. Si hay código de barras, obtener desde Open Food Facts o catálogo local
+        if (!targetProduct && barcodeParam) {
+          try {
+            targetProduct = await fetchProductByBarcode(barcodeParam);
+          } catch (err: any) {
+            console.error('Error cargando producto compartido por código de barras:', err);
+            setErrorMessage(`No se pudo cargar el producto compartido (${barcodeParam})`);
+          }
+        }
+
+        if (targetProduct) {
+          const finalProduct = healProduct(targetProduct);
+          const withTimestamp: ScannedProduct = {
+            ...finalProduct,
+            timestamp: Date.now(),
+          };
+
+          // AÑADIR AUTOMÁTICAMENTE AL HISTORIAL DE LA OTRA PERSONA
+          setScanHistory((prev) => {
+            const filtered = prev.filter((p) => p.barcode !== withTimestamp.barcode);
+            return [withTimestamp, ...filtered].slice(0, 50);
+          });
+
+          // Evaluar y abrir la radiografía del producto
+          const evaluation = evaluateProduct(withTimestamp, userProfile);
+          setActiveEvaluation(evaluation);
+          trackScanEvent(withTimestamp, evaluation, userProfile.userAccount);
+
+          // Notificación visual de confirmación
+          setSharedToastMessage(`🥑 ¡«${withTimestamp.name}» añadido a tu historial!`);
+          setTimeout(() => setSharedToastMessage(null), 5000);
+        }
+      } catch (err) {
+        console.error('Error procesando producto compartido:', err);
+      } finally {
+        setIsLoadingProduct(false);
+      }
+    };
+
+    handleSharedProductDeepLink();
 
     // Escuchar evento de instalación PWA (Chrome, Edge, Android)
     const handleBeforeInstall = (e: Event) => {
@@ -383,6 +458,22 @@ export function App() {
 
       {/* Main Content Viewport */}
       <main className="flex-1 w-full max-w-md mx-auto px-4 py-4 pb-24">
+        {/* Banner de Confirmación: Producto Compartido Añadido al Historial */}
+        {sharedToastMessage && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-[#30d158]/15 border border-[#30d158]/30 flex items-center justify-between gap-3 text-[12px] text-[#1d1d1f] dark:text-white shadow-sm">
+            <div className="flex items-center gap-2 min-w-0">
+              <CheckCircle2 size={16} className="text-[#30d158] shrink-0" />
+              <span className="truncate font-semibold">{sharedToastMessage}</span>
+            </div>
+            <button
+              onClick={() => setSharedToastMessage(null)}
+              className="text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white shrink-0 text-sm px-1"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Apple Alert Notification */}
         {errorMessage && (
           <div className="mb-4 p-3.5 rounded-2xl bg-[#ff453a]/12 border border-[#ff453a]/25 flex items-center justify-between gap-3 text-[12px] text-[#ff453a] dark:text-white">

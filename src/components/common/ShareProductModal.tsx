@@ -41,14 +41,49 @@ export const ShareProductModal: React.FC<ShareProductModalProps> = ({
 
 Recomendado para una alimentación limpia y consciente con Maruca.`;
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://maruca.app';
+  const getProductShareUrl = () => {
+    if (typeof window === 'undefined') return 'https://maruca-salud.netlify.app';
+    const baseUrl = window.location.origin;
+
+    // Si tiene código de barras identificable (no OCR local)
+    if (product.barcode && !product.barcode.startsWith('OCR-')) {
+      return `${baseUrl}/?barcode=${encodeURIComponent(product.barcode)}`;
+    }
+
+    // Para productos analizados mediante OCR o sin código de barras estándar, empaquetar datos seguros
+    try {
+      const minimalProduct = {
+        barcode: product.barcode,
+        name: product.name,
+        brands: product.brands,
+        imageUrl: product.imageUrl,
+        quantity: product.quantity,
+        categories: product.categories,
+        nutriscoreGrade: product.nutriscoreGrade,
+        novaGroup: product.novaGroup,
+        nutriments: product.nutriments,
+        ingredientsText: product.ingredientsText,
+        allergensTags: product.allergensTags,
+        tracesTags: product.tracesTags,
+        additivesTags: product.additivesTags,
+        hasPalmOil: product.hasPalmOil,
+      };
+      const jsonStr = JSON.stringify(minimalProduct);
+      const encodedData = btoa(unescape(encodeURIComponent(jsonStr)));
+      return `${baseUrl}/?barcode=${encodeURIComponent(product.barcode)}&sharedData=${encodeURIComponent(encodedData)}`;
+    } catch (e) {
+      return `${baseUrl}/?barcode=${encodeURIComponent(product.barcode)}`;
+    }
+  };
+
+  const shareUrl = getProductShareUrl();
 
   const handleNativeShare = async () => {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
-          title: `Recomendación: ${product.name}`,
-          text: shareText,
+          title: `Recomendación Maruca: ${product.name}`,
+          text: `${shareText}\n\n🔗 Pulsa para ver el análisis y guardarlo en tu historial:`,
           url: shareUrl,
         });
         onClose();
@@ -62,7 +97,8 @@ Recomendado para una alimentación limpia y consciente con Maruca.`;
 
   const handleCopyClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+      const fullMessage = `${shareText}\n\n🔗 Ver producto y guardar en tu historial:\n${shareUrl}`;
+      await navigator.clipboard.writeText(fullMessage);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch (e) {
@@ -71,12 +107,14 @@ Recomendado para una alimentación limpia y consciente con Maruca.`;
   };
 
   const handleShareWhatsApp = () => {
-    const encoded = encodeURIComponent(`${shareText}\n${shareUrl}`);
+    const fullMessage = `${shareText}\n\n🔗 Ver producto y guardar en tu historial:\n${shareUrl}`;
+    const encoded = encodeURIComponent(fullMessage);
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
   };
 
   const handleShareTelegram = () => {
-    const encoded = encodeURIComponent(shareText);
+    const fullMessage = `${shareText}\n\n🔗 Ver producto y guardar en tu historial:`;
+    const encoded = encodeURIComponent(fullMessage);
     const url = encodeURIComponent(shareUrl);
     window.open(`https://t.me/share/url?url=${url}&text=${encoded}`, '_blank');
   };
@@ -153,6 +191,12 @@ Recomendado para una alimentación limpia y consciente con Maruca.`;
               <span>•</span>
               <span>Maruca</span>
             </div>
+          </div>
+
+          {/* Indicador de sincronización en historial */}
+          <div className="mb-3.5 p-2.5 rounded-2xl bg-[#30d158]/10 border border-[#30d158]/20 flex items-center justify-center gap-2 text-[11px] font-semibold text-[#30d158]">
+            <Sparkles size={14} className="shrink-0" />
+            <span>Al abrir el enlace, se guardará directamente en su historial</span>
           </div>
 
           {/* Opciones de Compartir */}
