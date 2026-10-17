@@ -19,7 +19,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
   freeScansRemaining = 0,
   onContinueFree,
 }) => {
-  const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'lifetime'>('yearly');
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
 
   if (!isOpen) return null;
 
@@ -95,9 +95,9 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
           <div className="grid grid-cols-2 gap-3 mb-5">
             <button
               type="button"
-              onClick={() => setSelectedPlan('yearly')}
+              onClick={() => setSelectedPlan('monthly')}
               className={`p-3.5 rounded-2xl text-left transition relative border ${
-                selectedPlan === 'yearly'
+                selectedPlan === 'monthly'
                   ? 'border-[#0071e3] bg-[#0071e3]/10 ring-1 ring-[#0071e3]'
                   : 'border-black/[0.08] dark:border-white/[0.08] bg-[#f2f2f7] dark:bg-white/[0.04] hover:bg-black/[0.02] dark:hover:bg-white/[0.06]'
               }`}
@@ -105,24 +105,24 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
               <div className="text-[10px] font-semibold text-[#0071e3] uppercase tracking-wider">
                 Prueba 7 días gratis
               </div>
-              <div className="text-[17px] font-bold text-[#1d1d1f] dark:text-white mt-1">29,99 €</div>
-              <div className="text-[11px] text-[#86868b]">2,49 € / mes al año</div>
+              <div className="text-[18px] font-bold text-[#1d1d1f] dark:text-white mt-1">4,99 €</div>
+              <div className="text-[11px] text-[#86868b]">al mes • Sin permanencia</div>
             </button>
 
             <button
               type="button"
-              onClick={() => setSelectedPlan('lifetime')}
+              onClick={() => setSelectedPlan('yearly')}
               className={`p-3.5 rounded-2xl text-left transition relative border ${
-                selectedPlan === 'lifetime'
+                selectedPlan === 'yearly'
                   ? 'border-[#0071e3] bg-[#0071e3]/10 ring-1 ring-[#0071e3]'
                   : 'border-black/[0.08] dark:border-white/[0.08] bg-[#f2f2f7] dark:bg-white/[0.04] hover:bg-black/[0.02] dark:hover:bg-white/[0.06]'
               }`}
             >
-              <div className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wider">
-                Pago único
+              <div className="text-[10px] font-semibold text-[#30d158] uppercase tracking-wider">
+                Ahorra 40%
               </div>
-              <div className="text-[17px] font-bold text-[#1d1d1f] dark:text-white mt-1">9,99 €</div>
-              <div className="text-[11px] text-[#86868b]">Acceso vitalicio</div>
+              <div className="text-[18px] font-bold text-[#1d1d1f] dark:text-white mt-1">34,99 €</div>
+              <div className="text-[11px] text-[#86868b]">al año (2,91 € / mes)</div>
             </button>
           </div>
 
@@ -132,7 +132,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
               onClick={handleProClick}
               className="w-full py-3.5 px-4 rounded-full bg-[#1d1d1f] dark:bg-white hover:opacity-90 text-white dark:text-black font-semibold text-[15px] tracking-tight transition active:scale-[0.98] shadow-lg flex items-center justify-center gap-1.5"
             >
-              <span>Continuar con Maruca Pro</span>
+              <span>{selectedPlan === 'monthly' ? 'Empezar con 4,99 €/mes' : 'Continuar con Plan Anual (34,99 €)'}</span>
             </button>
 
             {onContinueFree && freeScansRemaining > 0 && (

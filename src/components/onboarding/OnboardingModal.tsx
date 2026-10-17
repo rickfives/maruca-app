@@ -399,7 +399,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
             </div>
 
             <div className="text-center text-[10px] text-[#86868b]">
-              Prueba gratuita de 7 días. Luego 29,99 €/año o 9,99 € pago único.
+              Prueba gratuita de 7 días. Luego solo 4,99 €/mes. Sin permanencia.
             </div>
           </motion.div>
         )}
