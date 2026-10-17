@@ -20,6 +20,13 @@ import {
   Apple,
   Coffee,
   PieChart,
+  Trash2,
+  UserPlus,
+  Lock,
+  Mail,
+  Calendar,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { ZeldaHeart } from '../common/ZeldaHeart';
 import {
@@ -27,7 +34,8 @@ import {
   exportTelemetryJSON,
   getTelemetryEvents,
 } from '../../services/analyticsService';
-import { TelemetryDashboardData } from '../../types';
+import { getRegisteredUsers, deleteUserAccount, registerUser } from '../../services/authService';
+import { TelemetryDashboardData, AuthUser } from '../../types';
 
 interface AdminDashboardModalProps {
   isOpen: boolean;
@@ -41,7 +49,19 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   adminUsername = 'dawsson',
 }) => {
   const [data, setData] = useState<TelemetryDashboardData>(() => getTelemetryDashboardData());
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'health' | 'feed' | 'insights'>('overview');
+  const [usersList, setUsersList] = useState(() => getRegisteredUsers());
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userToDelete, setUserToDelete] = useState<any | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    name: '',
+    username: '',
+    password: '',
+    email: '',
+  });
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'products' | 'health' | 'feed' | 'insights'>('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
@@ -51,9 +71,69 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     setIsRefreshing(true);
     setTimeout(() => {
       setData(getTelemetryDashboardData());
+      setUsersList(getRegisteredUsers());
       setIsRefreshing(false);
     }, 400);
   };
+
+  const handleConfirmDelete = () => {
+    if (!userToDelete) return;
+    const res = deleteUserAccount(userToDelete.id);
+    if (res.success) {
+      setUsersList(getRegisteredUsers());
+      setData(getTelemetryDashboardData());
+      setStatusMessage({
+        type: 'success',
+        text: `Cuenta de ${userToDelete.name || userToDelete.username} (@${userToDelete.username}) eliminada con éxito de la base de datos.`,
+      });
+      setUserToDelete(null);
+      setTimeout(() => setStatusMessage(null), 4000);
+    } else {
+      setStatusMessage({
+        type: 'error',
+        text: res.error || 'Error al eliminar la cuenta.',
+      });
+      setTimeout(() => setStatusMessage(null), 4000);
+    }
+  };
+
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserData.username || !newUserData.password) return;
+    const res = registerUser(
+      newUserData.username,
+      newUserData.password,
+      newUserData.name,
+      newUserData.email
+    );
+    if (res.success) {
+      setUsersList(getRegisteredUsers());
+      setData(getTelemetryDashboardData());
+      setIsAddingUser(false);
+      setNewUserData({ name: '', username: '', password: '', email: '' });
+      setStatusMessage({
+        type: 'success',
+        text: `Cuenta de ${res.user?.name || newUserData.username} (@${newUserData.username}) creada con éxito.`,
+      });
+      setTimeout(() => setStatusMessage(null), 4000);
+    } else {
+      setStatusMessage({
+        type: 'error',
+        text: res.error || 'Error al crear usuario.',
+      });
+      setTimeout(() => setStatusMessage(null), 4000);
+    }
+  };
+
+  const filteredUsers = usersList.filter((u) => {
+    const q = userSearchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      u.username.toLowerCase().includes(q) ||
+      (u.email && u.email.toLowerCase().includes(q))
+    );
+  });
 
   const handleExport = () => {
     const jsonString = exportTelemetryJSON();
@@ -140,7 +220,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
         <div className="px-4 sm:px-6 pt-3 pb-1 border-b border-black/[0.06] dark:border-white/[0.06] bg-black/[0.01] dark:bg-white/[0.01]">
           <div className="flex gap-1 overflow-x-auto pb-2 scrollbar-none text-[12px] font-semibold">
             {[
-              { id: 'overview', label: 'Resumen & Usuarios', icon: Users },
+              { id: 'overview', label: 'Resumen Global', icon: BarChart3 },
+              { id: 'users', label: 'Cuentas & Base de Datos', icon: Users },
               { id: 'products', label: 'Qué Escanean', icon: Scan },
               { id: 'health', label: 'Salud & Alérgenos', icon: AlertTriangle },
               { id: 'feed', label: 'Actividad en Vivo', icon: Activity },
@@ -166,9 +247,41 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
           </div>
         </div>
 
+        {/* Global Toast / Status Message */}
+        <AnimatePresence>
+          {statusMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className={`mx-4 sm:mx-6 mt-3 p-3.5 rounded-2xl flex items-center justify-between text-[13px] font-medium border ${
+                statusMessage.type === 'success'
+                  ? 'bg-[#30d158]/12 border-[#30d158]/30 text-[#30d158]'
+                  : 'bg-[#ff453a]/12 border-[#ff453a]/30 text-[#ff453a]'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                {statusMessage.type === 'success' ? (
+                  <CheckCircle2 size={16} className="shrink-0" />
+                ) : (
+                  <AlertCircle size={16} className="shrink-0" />
+                )}
+                <span className="truncate">{statusMessage.text}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStatusMessage(null)}
+                className="opacity-70 hover:opacity-100 p-1 shrink-0 ml-2"
+              >
+                <X size={14} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Scrollable Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-          {/* TAB 1: RESUMEN GENERAL & USUARIOS */}
+          {/* TAB 1: RESUMEN GENERAL */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* KPIs Grid */}
@@ -268,6 +381,14 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                         style={{ width: `${(data.registeredUsersCount / data.activeUsersCount) * 100}%` }}
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('users')}
+                      className="text-[11px] font-semibold text-[#0071e3] dark:text-[#64d2ff] hover:underline flex items-center gap-1 mt-1.5"
+                    >
+                      <span>Ver nombres y gestionar cuentas ({usersList.length})</span>
+                      <ArrowRight size={11} />
+                    </button>
                   </div>
 
                   <div>
@@ -317,6 +438,242 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: CUENTAS & USUARIOS DE LA BASE DE DATOS */}
+          {activeTab === 'users' && (
+            <div className="space-y-5">
+              {/* Header / Search & Add Bar */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#f2f2f7] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[16px] font-bold tracking-tight text-[#1d1d1f] dark:text-white">
+                        Base de Datos de Cuentas
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#0071e3]/15 text-[#0071e3] dark:text-[#64d2ff]">
+                        {usersList.length} registradas
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-[#86868b] mt-0.5">
+                      Visualiza el nombre real de cada usuario, su @identificador y elimina cuentas si es necesario.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingUser(!isAddingUser)}
+                    className="py-2 px-3.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-[12px] shadow-sm flex items-center gap-1.5 transition active:scale-95 shrink-0"
+                  >
+                    <UserPlus size={14} />
+                    <span>{isAddingUser ? 'Cerrar Formulario' : 'Crear Usuario'}</span>
+                  </button>
+                </div>
+
+                {/* Formulario Crear Usuario Manual */}
+                {isAddingUser && (
+                  <form
+                    onSubmit={handleCreateUser}
+                    className="p-4 rounded-xl bg-white dark:bg-[#2c2c2e] border border-black/[0.08] dark:border-white/[0.1] space-y-3 shadow-xs"
+                  >
+                    <div className="text-[13px] font-bold text-[#1d1d1f] dark:text-white flex items-center gap-1.5">
+                      <UserPlus size={15} className="text-[#0071e3]" />
+                      <span>Registrar Nuevo Usuario en la Base de Datos</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#86868b] mb-1">
+                          Nombre Completo (Real)
+                        </label>
+                        <input
+                          type="text"
+                          value={newUserData.name}
+                          onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+                          placeholder="Ej: Laura Gómez"
+                          className="w-full px-3 py-2 text-[13px] rounded-xl bg-black/[0.03] dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-[#1d1d1f] dark:text-white focus:outline-none focus:border-[#0071e3]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#86868b] mb-1">
+                          Nombre de Usuario (@handle) *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={newUserData.username}
+                          onChange={(e) => setNewUserData({ ...newUserData, username: e.target.value })}
+                          placeholder="Ej: laurag"
+                          className="w-full px-3 py-2 text-[13px] rounded-xl bg-black/[0.03] dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-[#1d1d1f] dark:text-white focus:outline-none focus:border-[#0071e3]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#86868b] mb-1">
+                          Contraseña *
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={newUserData.password}
+                          onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                          placeholder="Mínimo 4 caracteres"
+                          className="w-full px-3 py-2 text-[13px] rounded-xl bg-black/[0.03] dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-[#1d1d1f] dark:text-white focus:outline-none focus:border-[#0071e3]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#86868b] mb-1">
+                          Email (Opcional)
+                        </label>
+                        <input
+                          type="email"
+                          value={newUserData.email}
+                          onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                          placeholder="Ej: laura@ejemplo.com"
+                          className="w-full px-3 py-2 text-[13px] rounded-xl bg-black/[0.03] dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-[#1d1d1f] dark:text-white focus:outline-none focus:border-[#0071e3]"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingUser(false)}
+                        className="py-1.5 px-3 rounded-lg text-[12px] font-semibold text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="py-1.5 px-4 rounded-lg bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-[12px] shadow-sm transition"
+                      >
+                        Guardar Usuario
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Input de Búsqueda */}
+                <div className="relative">
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b]" />
+                  <input
+                    type="text"
+                    value={userSearchQuery}
+                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                    placeholder="Buscar cuenta por nombre real, @usuario o email..."
+                    className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-white dark:bg-[#2c2c2e] border border-black/[0.08] dark:border-white/10 text-[13px] text-[#1d1d1f] dark:text-white placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3]"
+                  />
+                  {userSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setUserSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Lista de Usuarios */}
+              <div className="space-y-2.5">
+                {filteredUsers.length === 0 ? (
+                  <div className="p-8 text-center rounded-2xl bg-[#f2f2f7] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08]">
+                    <Users size={28} className="mx-auto text-[#86868b] mb-2 opacity-60" />
+                    <p className="text-[14px] font-semibold text-[#1d1d1f] dark:text-white">
+                      No se encontraron cuentas de usuario
+                    </p>
+                    <p className="text-[12px] text-[#86868b] mt-1">
+                      Ningún registro coincide con "{userSearchQuery}".
+                    </p>
+                  </div>
+                ) : (
+                  filteredUsers.map((u) => {
+                    const isMasterAdmin = u.username.toLowerCase() === 'dawsson';
+                    const displayName = u.name || u.username;
+                    const initial = displayName.charAt(0).toUpperCase();
+
+                    return (
+                      <div
+                        key={u.id || u.username}
+                        className="p-4 rounded-2xl bg-[#f2f2f7] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition hover:border-black/15 dark:hover:border-white/20"
+                      >
+                        {/* Usuario Info */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-[16px] shadow-sm shrink-0"
+                            style={{ backgroundColor: u.avatarColor || '#30d158' }}
+                          >
+                            {initial}
+                          </div>
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[15px] font-bold text-[#1d1d1f] dark:text-white">
+                                {displayName}
+                              </span>
+                              {isMasterAdmin ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#bf5af2]/15 text-[#bf5af2] border border-[#bf5af2]/30 flex items-center gap-1">
+                                  <Crown size={10} />
+                                  Admin Maestro
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30">
+                                  Registrado
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2.5 text-[12px] text-[#86868b] flex-wrap">
+                              <span className="font-semibold text-[#0071e3] dark:text-[#64d2ff]">
+                                @{u.username}
+                              </span>
+                              {u.email && (
+                                <span className="flex items-center gap-1">
+                                  <Mail size={11} />
+                                  <span className="truncate max-w-[200px]">{u.email}</span>
+                                </span>
+                              )}
+                              {u.createdAt && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar size={11} />
+                                  <span>
+                                    {new Date(u.createdAt).toLocaleDateString('es-ES', {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Acciones */}
+                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                          {isMasterAdmin ? (
+                            <span
+                              title="Cuenta protegida por seguridad contra eliminación accidental"
+                              className="px-3 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/5 border border-black/[0.06] dark:border-white/10 text-[11px] font-semibold text-[#86868b] flex items-center gap-1.5"
+                            >
+                              <Lock size={12} className="text-[#bf5af2]" />
+                              <span>Protegida</span>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setUserToDelete(u)}
+                              title={`Borrar cuenta de ${displayName}`}
+                              className="px-3 py-1.5 rounded-xl bg-[#ff453a]/10 hover:bg-[#ff453a]/20 border border-[#ff453a]/30 text-[#ff453a] text-[12px] font-semibold flex items-center gap-1.5 transition active:scale-95"
+                            >
+                              <Trash2 size={13} />
+                              <span>Borrar Cuenta</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
@@ -688,6 +1045,51 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
           </button>
         </div>
       </motion.div>
+
+      {/* Cuadro de Confirmación de Borrado de Cuenta */}
+      <AnimatePresence>
+        {userToDelete && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 8 }}
+              className="w-full max-w-sm bg-white dark:bg-[#1c1c1e] border border-black/10 dark:border-white/15 rounded-[28px] p-5 sm:p-6 shadow-2xl space-y-4 text-center"
+            >
+              <div className="w-14 h-14 mx-auto rounded-full bg-[#ff453a]/15 text-[#ff453a] flex items-center justify-center">
+                <Trash2 size={26} />
+              </div>
+              <div>
+                <h3 className="text-[17px] font-bold text-[#1d1d1f] dark:text-white">
+                  ¿Eliminar esta cuenta?
+                </h3>
+                <p className="text-[13px] text-[#86868b] mt-1.5 leading-relaxed">
+                  Vas a borrar la cuenta de <span className="font-bold text-[#1d1d1f] dark:text-white">{userToDelete.name || userToDelete.username}</span> (<span className="font-semibold text-[#0071e3] dark:text-[#64d2ff]">@{userToDelete.username}</span>).
+                </p>
+                <p className="text-[11px] text-[#ff453a] mt-2 font-medium bg-[#ff453a]/10 p-2.5 rounded-xl border border-[#ff453a]/20 text-center">
+                  Esta acción es irreversible y eliminará su registro de la base de datos de Maruca de forma inmediata.
+                </p>
+              </div>
+              <div className="flex gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setUserToDelete(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-black/[0.05] dark:bg-white/10 hover:bg-black/[0.08] dark:hover:bg-white/15 font-semibold text-[13px] text-[#1d1d1f] dark:text-white transition active:scale-95"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#ff453a] hover:bg-[#ff453a]/90 text-white font-semibold text-[13px] shadow-sm transition active:scale-95"
+                >
+                  Sí, Borrar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

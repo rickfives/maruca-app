@@ -63,7 +63,7 @@ export function getRegisteredUsers(): StoredUserAccount[] {
       // Actualizar hash por si acaso
       list = list.map((u) =>
         u.username.toLowerCase() === 'dawsson'
-          ? { ...u, isAdmin: true, name: 'Dawsson (Administrador)', passwordHash: hashPassword('mxonda1234') }
+          ? { ...u, isAdmin: true, name: 'Dawsson', passwordHash: hashPassword('mxonda1234') }
           : u
       );
       localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(list));
@@ -152,15 +152,18 @@ export function loginUser(usernameInput: string, passwordInput: string): { succe
 }
 
 /**
- * Registra un nuevo usuario con usuario y contraseña
+ * Registra un nuevo usuario con usuario, contraseña y nombre opcional
  */
 export function registerUser(
   usernameInput: string,
   passwordInput: string,
+  nameInput?: string,
   emailInput?: string
 ): { success: boolean; user?: AuthUser; error?: string } {
   const username = usernameInput.trim();
   const password = passwordInput.trim();
+  const rawName = nameInput?.trim();
+  const name = rawName || (username.charAt(0).toUpperCase() + username.slice(1));
   const email = emailInput?.trim() || `${username.toLowerCase()}@maruca.app`;
 
   if (!username) {
@@ -189,7 +192,7 @@ export function registerUser(
     id: `usr_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     username,
     email,
-    name: username.charAt(0).toUpperCase() + username.slice(1),
+    name,
     avatarColor: randomColor,
     passwordHash: hashPassword(password),
     createdAt: new Date().toISOString(),
@@ -214,6 +217,86 @@ export function registerUser(
   } catch (e) {}
 
   return { success: true, user: safeUser };
+}
+
+/**
+ * Elimina una cuenta de usuario de la base de datos por su ID o username.
+ * Protege al Administrador Maestro (dawsson) contra eliminación accidental.
+ */
+export function deleteUserAccount(userIdOrUsername: string): { success: boolean; error?: string } {
+  try {
+    const users = getRegisteredUsers();
+    const target = users.find(
+      (u) => u.id === userIdOrUsername || u.username.toLowerCase() === userIdOrUsername.toLowerCase()
+    );
+
+    if (!target) {
+      return { success: false, error: 'Cuenta de usuario no encontrada en la base de datos.' };
+    }
+
+    if (target.username.toLowerCase() === 'dawsson') {
+      return { success: false, error: 'No es posible eliminar la cuenta del Administrador Principal.' };
+    }
+
+    const updated = users.filter((u) => u.id !== target.id);
+    localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated));
+
+    // Si el usuario eliminado era el que tenía la sesión activa, cerrar sesión
+    const current = getCurrentUser();
+    if (current && (current.id === target.id || current.username.toLowerCase() === target.username.toLowerCase())) {
+      logoutUser();
+    }
+
+    return { success: true };
+  } catch (e) {
+    console.error('Error al borrar usuario:', e);
+    return { success: false, error: 'Error al actualizar la base de datos.' };
+  }
+}
+
+/**
+ * Actualiza los datos de un usuario (Nombre o Correo)
+ */
+export function updateUserAccount(
+  userId: string,
+  updates: Partial<{ name: string; email: string }>
+): { success: boolean; user?: AuthUser; error?: string } {
+  try {
+    const users = getRegisteredUsers();
+    let updatedUser: StoredUserAccount | null = null;
+
+    const updatedList = users.map((u) => {
+      if (u.id === userId) {
+        updatedUser = {
+          ...u,
+          name: updates.name !== undefined ? updates.name.trim() : u.name,
+          email: updates.email !== undefined ? updates.email.trim() : u.email,
+        };
+        return updatedUser;
+      }
+      return u;
+    });
+
+    if (!updatedUser) {
+      return { success: false, error: 'Usuario no encontrado.' };
+    }
+
+    localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updatedList));
+
+    const current = getCurrentUser();
+    if (current && current.id === userId) {
+      const safe: AuthUser = {
+        ...current,
+        name: (updatedUser as StoredUserAccount).name,
+        email: (updatedUser as StoredUserAccount).email,
+      };
+      localStorage.setItem(STORAGE_CURRENT_USER_KEY, JSON.stringify(safe));
+    }
+
+    return { success: true, user: updatedUser };
+  } catch (e) {
+    return { success: false, error: 'Error actualizando usuario.' };
+  }
 }
 
 /**

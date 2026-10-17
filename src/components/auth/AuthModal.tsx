@@ -26,6 +26,7 @@ interface AuthModalProps {
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +47,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         setError(result.error || 'Error al iniciar sesión.');
       }
     } else {
-      const result = registerUser(username, password, email);
+      const result = registerUser(username, password, fullName, email);
       if (result.success && result.user) {
         handleAuthSuccess(result.user);
       } else {
@@ -137,6 +138,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Nombre Completo (Solo registro) */}
+          {mode === 'register' && (
+            <div className="space-y-1 animate-in fade-in duration-150">
+              <label className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider px-1">
+                Nombre Completo (Opcional)
+              </label>
+              <div className="relative">
+                <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b]" />
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Tu nombre (ej. Ricardo Hernández)"
+                  className="w-full py-2.5 pl-10 pr-3 rounded-xl bg-[#f2f2f7] dark:bg-black border border-black/[0.08] dark:border-white/[0.08] focus:border-[#0071e3] text-[13px] text-[#1d1d1f] dark:text-white outline-none transition"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Usuario */}
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider px-1">
@@ -149,7 +169,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Nombre de usuario"
+                placeholder="Nombre de usuario (ej. ricardo99)"
                 className="w-full py-2.5 pl-10 pr-3 rounded-xl bg-[#f2f2f7] dark:bg-black border border-black/[0.08] dark:border-white/[0.08] focus:border-[#0071e3] text-[13px] text-[#1d1d1f] dark:text-white outline-none transition"
               />
             </div>
