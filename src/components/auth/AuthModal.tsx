@@ -14,8 +14,6 @@ import {
   X,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
-  Crown,
 } from 'lucide-react';
 import { playScanFeedback } from '../../utils/audioFeedback';
 
@@ -67,17 +65,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     }, 900);
   };
 
-  const handleFillDemo = () => {
-    setUsername('usuario');
-    setPassword('maruca123');
-    setError(null);
-  };
 
-  const handleFillAdmin = () => {
-    setUsername('dawsson');
-    setPassword('mxonda1234');
-    setError(null);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/75 backdrop-blur-xl">
@@ -237,27 +225,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </button>
         </form>
 
-        {/* Botones de acceso rápido */}
-        {mode === 'login' && (
-          <div className="pt-1 space-y-1.5 text-center">
-            <button
-              type="button"
-              onClick={handleFillAdmin}
-              className="text-[11px] text-[#bf5af2] hover:underline font-semibold flex items-center justify-center gap-1.5 mx-auto"
-            >
-              <Crown size={12} />
-              <span>Acceso Administrador (@dawsson / mxonda1234)</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleFillDemo}
-              className="text-[11px] text-[#86868b] hover:text-[#0071e3] hover:underline font-medium flex items-center justify-center gap-1 mx-auto"
-            >
-              <Sparkles size={11} />
-              <span>Probar con cuenta demo (usuario / maruca123)</span>
-            </button>
-          </div>
-        )}
+
 
         {/* Continuar como invitado */}
         <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.08] text-center">
